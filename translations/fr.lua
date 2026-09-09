@@ -1,4 +1,5 @@
 return {
+  ['keybind_push_to_talk'] = 'Voix - Parler',
   ['keybind_cycle_proximity'] = 'Voix - Changer la portée de la voix',
 
   ['proximity_whisper'] = 'Chuchoter',

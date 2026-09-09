@@ -47,14 +47,17 @@ All options live in `config/` and are documented inline.
 
 | File | Options |
 |---|---|
-| `config/voice.lua` | `audio` (rendering `mode`, `sendingRangeOnly`, `nativeRangeFactor`), `proximity` (`defaultMode`, `modes`, `keybind`, `scanInterval`, `targetMargin`, `hysteresis`), `indicator` (`enabled`, `duration`, `fade`, `style`, `color`, `alpha`), `effects` (named submixes), `intervals`, `mute` (`defaultDuration`), `staffRole` |
+| `config/voice.lua` | `audio` (rendering `mode`, `sendingRangeOnly`, `nativeRangeFactor`), `proximity` (`defaultMode`, `modes`, `scanInterval`, `targetMargin`, `hysteresis`), `keybinds` (`pushToTalk`, `cycleProximity`), `indicator` (`enabled`, `duration`, `fade`, `style`, `color`, `alpha`), `effects` (named submixes), `intervals`, `mute` (`defaultDuration`), `staffRole` |
 | `config/translation.lua` | `language` (`fr` / `en`) |
 
 ### Keybinds
 
 | Key | Action |
 |---|---|
-| `F11` | Cycles the proximity mode. Rebindable in the game settings; set `proximity.keybind = false` to register none. |
+| `N` | Push to talk: held to speak. The game push-to-talk setting still applies, a player on voice activation transmits without it. |
+| `F11` | Cycles the proximity mode. |
+
+Defaults live in `config/voice.lua` (`keybinds`), every player can rebind them in the game settings, and setting one to `false` registers none.
 
 ### Commands
 
@@ -90,6 +93,8 @@ Granted automatically to the configured `staffRole`:
 |---|---|---|
 | `IsConnected` | — | Whether voice is operational (connected and routed). |
 | `IsTalking` | — | Whether the local microphone is live. |
+| `HoldTalk` / `ReleaseTalk` | `owner` | Opens the microphone on behalf of a caller until released; several callers may hold it, it closes with the last one. A radio key uses this instead of touching the game controls. |
+| `IsTalkHeld` | — | Whether a key or a resource holds the microphone open. |
 | `GetProximity` | — | `{ mode, range, overridden, owner? }`. |
 | `GetProximityModes` | — | The selectable modes in cycling order. |
 | `SetProximityMode` | `name` | Selects a mode. |
@@ -124,8 +129,10 @@ exports.siku_voice:ClearRendering(otherId, 'call')
 -- A radio: members always known, routed only while the key is held
 exports.siku_voice:SetRoute('radio', { players = members })
 exports.siku_voice:EnableRoute('radio', false)
--- key pressed / released
+-- radio key pressed / released
 exports.siku_voice:EnableRoute('radio', true)
+exports.siku_voice:HoldTalk('radio')
+exports.siku_voice:ReleaseTalk('radio')
 exports.siku_voice:EnableRoute('radio', false)
 -- a member starts transmitting: hear them flat, through the radio filter
 exports.siku_voice:SetRendering(memberId, 'radio', { volume = 0.35, effect = 'radio', priority = 5 })
@@ -165,7 +172,7 @@ Local events, for resources observing the voice state:
 
 ```
 siku_voice/
-├── client/modules/    # support, mumble, effects, rendering, routing, proximity, scan, indicator, session, keybinds, api
+├── client/modules/    # support, mumble, effects, rendering, routing, proximity, scan, indicator, session, talk, keybinds, api
 ├── server/modules/    # channels, audio, mute, lifecycle, api
 ├── shared/modules/    # proximity modes registry
 ├── config/            # behavior, language
