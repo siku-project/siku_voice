@@ -35,6 +35,7 @@ client_scripts {
   'client/modules/scan.lua',
   'client/modules/indicator.lua',
   'client/modules/session.lua',
+  'client/modules/talk.lua',
   'client/modules/keybinds.lua',
   'client/modules/api.lua',
 }

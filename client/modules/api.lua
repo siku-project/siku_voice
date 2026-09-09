@@ -10,6 +10,26 @@ local function isTalking()
   return VoiceSession.isTalking()
 end
 
+--- Opens the microphone on behalf of a caller until it is released.
+---@param owner string A key naming the caller.
+---@return boolean held Whether the hold was stored.
+local function holdTalk(owner)
+  return VoiceTalk.hold(owner)
+end
+
+--- Releases a microphone hold.
+---@param owner string The key it was held with.
+---@return boolean released Whether the hold existed.
+local function releaseTalk(owner)
+  return VoiceTalk.release(owner)
+end
+
+--- Whether the microphone is being held open by a key or a resource.
+---@return boolean held Whether a hold is active.
+local function isTalkHeld()
+  return VoiceTalk.isHeld()
+end
+
 --- Reads the proximity state.
 ---@return table state { mode, range, overridden, owner? }.
 local function getProximity()
@@ -174,6 +194,9 @@ end
 
 exports('IsConnected', isConnected)
 exports('IsTalking', isTalking)
+exports('HoldTalk', holdTalk)
+exports('ReleaseTalk', releaseTalk)
+exports('IsTalkHeld', isTalkHeld)
 exports('GetProximity', getProximity)
 exports('GetProximityModes', getProximityModes)
 exports('SetProximityMode', setProximityMode)

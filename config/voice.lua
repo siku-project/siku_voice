@@ -45,10 +45,6 @@ VoiceConfig = {
       { name = 'shout', range = 15.0 },
     },
 
-    --- The default key cycling through the modes. Every player can rebind
-    --- it in the game settings. Set to false to register no keybind.
-    keybind = 'F11',
-
     --- How often (ms) nearby players are scanned.
     scanInterval = 300,
 
@@ -61,6 +57,19 @@ VoiceConfig = {
     --- dropped as a recipient, so someone walking along the edge is not
     --- added and removed every tick.
     hysteresis = 2.0,
+  },
+
+  --- Keybinds
+  ---
+  --- Default keys, registered through the core so every player can rebind
+  --- them in the game settings. Set one to false to register no keybind.
+  keybinds = {
+    --- Held to speak. The game push-to-talk setting still applies: a player
+    --- on voice activation transmits without it.
+    pushToTalk = 'N',
+
+    --- Cycles through the proximity modes.
+    cycleProximity = 'F11',
   },
 
   --- Indicator

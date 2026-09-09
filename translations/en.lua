@@ -1,4 +1,5 @@
 return {
+  ['keybind_push_to_talk'] = 'Voice - Push to talk',
   ['keybind_cycle_proximity'] = 'Voice - Cycle the speaking range',
 
   ['proximity_whisper'] = 'Whisper',
