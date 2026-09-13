@@ -94,6 +94,15 @@ VoiceConfig = {
     alpha = 140,
   },
 
+  --- Listening
+  ---
+  --- Hearing every player in scope whatever the distance, for staff
+  --- watching a scene. Resources ask for it through the API; this only
+  --- decides whether the game spectator mode asks for it on its own.
+  listening = {
+    followSpectate = true,
+  },
+
   --- Effects
   ---
   --- Audio effects a voice can be rendered through, each backed by a game

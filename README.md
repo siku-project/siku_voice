@@ -2,7 +2,7 @@
 
 A modern, high-performance voice system for the SIKU ecosystem — providing proximity voice, communication channels, calls, radio integration, audio effects, and a clean API for immersive FiveM roleplay experiences. Built for reliability, extensibility, and seamless integration across SIKU resources.
 
-![Version](https://img.shields.io/badge/version-1.0.0-4785bd)
+![Version](https://img.shields.io/badge/version-1.0.2-4785bd)
 ![FiveM](https://img.shields.io/badge/fx__version-cerulean-4785bd)
 ![Lua](https://img.shields.io/badge/Lua-5.4-4785bd)
 
@@ -17,7 +17,9 @@ A modern, high-performance voice system for the SIKU ecosystem — providing pro
 - **Effects registry** — game submixes declared in configuration or registered at runtime (radio filter, per-speaker output), referenced by name from rendering layers.
 - **Lifecycle-proof** — connection, reconnection, resource restart and stop all restore or release the engine state: personal channel, voice target, range, routes and rendering layers.
 - **Server authority where it matters** — mutes, audio mode, channel reservation and remote proximity control live server-side and rely on the core RBAC, commands, notifications and state bags.
-- **Ownership-aware cleanup** — routes, rendering layers, range overrides and proximity filters remember the resource that set them and vanish when it stops.
+- **Restrictions by reason** — a dead, cuffed or drowning player has their voice closed by the resource that knows why, on the scopes that matter (`proximity`, `radio`, `call`, anything, or all of them). Reasons stack: a scope opens again only when every reason closing it is gone, and no resource needs to know about the others.
+- **Listening** — staff watching a scene hear every player in scope whatever the distance, on request or automatically in the game spectator mode, without being heard themselves.
+- **Ownership-aware cleanup** — routes, rendering layers, range overrides, proximity filters, restrictions and listening requests remember the resource that set them and vanish when it stops, on the client and on the server alike.
 
 ## Dependencies
 
@@ -47,7 +49,7 @@ All options live in `config/` and are documented inline.
 
 | File | Options |
 |---|---|
-| `config/voice.lua` | `audio` (rendering `mode`, `sendingRangeOnly`, `nativeRangeFactor`), `proximity` (`defaultMode`, `modes`, `scanInterval`, `targetMargin`, `hysteresis`), `keybinds` (`pushToTalk`, `cycleProximity`), `indicator` (`enabled`, `duration`, `fade`, `style`, `color`, `alpha`), `effects` (named submixes), `intervals`, `mute` (`defaultDuration`), `staffRole` |
+| `config/voice.lua` | `audio` (rendering `mode`, `sendingRangeOnly`, `nativeRangeFactor`), `proximity` (`defaultMode`, `modes`, `scanInterval`, `targetMargin`, `hysteresis`), `keybinds` (`pushToTalk`, `cycleProximity`), `indicator` (`enabled`, `duration`, `fade`, `style`, `color`, `alpha`), `listening` (`followSpectate`), `effects` (named submixes), `intervals`, `mute` (`defaultDuration`), `staffRole` |
 | `config/translation.lua` | `language` (`fr` / `en`) |
 
 ### Keybinds
@@ -84,6 +86,8 @@ Granted automatically to the configured `staffRole`:
 - The **proximity** route is fed by a scan of the players in scope every `scanInterval` ms: within `range × targetMargin` to enter, `+ hysteresis` to leave, only players whose channel already exists, filtered by any registered proximity filter. The engine still cuts by the real distance every packet, so the target only needs to be a superset.
 - A **rendering layer** tells the local client how to hear one remote player: a flat volume that bypasses distance, an effect, or both. Several layers may stack on a player; the highest priority (then the latest) wins, and removing the last one hands the player back to plain proximity.
 - An **effect** is a game submix. Effects need the `native` audio mode, which is the default.
+- A **restriction** closes one or more scopes of the local voice for a named reason. `proximity` withholds the proximity route, `all` withholds every route and the microphone hold; any other scope (`radio`, `call`, one of your own) is only recorded, replicated and answered by `IsRestricted`, for the resource owning that scope to honour. Reasons are keys: `dead` set by a status resource and `cuffed` set by an inventory resource close `radio` independently, and the radio opens again only once both are cleared.
+- **Listening** adds the channel of every player in scope to what the local client hears, whatever the distance. Every client also sends into its own channel, which is what makes it audible to a listener without changing who it talks to. Listening is requested by owner, ends with the last one, and follows the game spectator mode when `listening.followSpectate` is on.
 
 ## API
 
@@ -113,6 +117,12 @@ Granted automatically to the configured `staffRole`:
 | `RegisterEffect` | `name, { radioFx?, parameters?, output? }` | Registers a submix-backed effect. |
 | `HasEffect` | `name` | Whether an effect is available. |
 | `AddProximityFilter` / `RemoveProximityFilter` | `name, handler` / `name` | A filter receiving `(serverId, distance, playerId)`; returning `false` excludes the player from proximity. |
+| `SetRestriction` | `reason, scopes?` | Closes scopes for a reason: one scope, a list, or nothing for every scope. Same reason replaces. |
+| `ClearRestriction` | `reason` | Lifts a restriction. |
+| `IsRestricted` | `scope` | `restricted, reasons`; a restriction on every scope closes any scope asked for. |
+| `GetRestrictions` | — | `{ [scope] = { reasons } }`. |
+| `StartListening` / `StopListening` | `owner` | Hears every player in scope whatever the distance, until the last owner stops. |
+| `IsListening` | — | Whether listening is on. |
 
 ```lua
 -- A megaphone: wider range while the item is used
@@ -136,6 +146,19 @@ exports.siku_voice:ReleaseTalk('radio')
 exports.siku_voice:EnableRoute('radio', false)
 -- a member starts transmitting: hear them flat, through the radio filter
 exports.siku_voice:SetRendering(memberId, 'radio', { volume = 0.35, effect = 'radio', priority = 5 })
+-- before opening the radio: honour whatever closed it
+local restricted, reasons = exports.siku_voice:IsRestricted('radio')
+
+-- A status resource: a dead player cannot speak anywhere
+exports.siku_voice:SetRestriction('dead')
+exports.siku_voice:ClearRestriction('dead')
+
+-- An inventory: cuffed hands hold neither a radio nor a phone
+exports.siku_voice:SetRestriction('cuffed', { 'radio', 'call' })
+
+-- A staff tool: hear the scene being watched
+exports.siku_voice:StartListening('spectate')
+exports.siku_voice:StopListening('spectate')
 ```
 
 ### Server exports
@@ -144,7 +167,11 @@ exports.siku_voice:SetRendering(memberId, 'radio', { volume = 0.35, effect = 'ra
 |---|---|---|
 | `SetPlayerProximityMode` | `sessionId, mode` | Selects a mode on a player. |
 | `SetPlayerRangeOverride` / `ClearPlayerRangeOverride` | `sessionId, owner, range, priority?` / `sessionId, owner` | Temporary range on a player. |
-| `GetPlayerVoice` | `sessionId` | `{ mode, range, muted, channel }`. |
+| `SetPlayerRestriction` / `ClearPlayerRestriction` | `sessionId, reason, scopes?` / `sessionId, reason` | Restriction on a player, lifted on its own when the calling resource stops. |
+| `IsPlayerRestricted` | `sessionId, scope` | `restricted, reasons`, as the client replicated them. |
+| `GetPlayerRestrictions` | `sessionId` | `{ [scope] = { reasons } }`. |
+| `SetPlayerListening` | `sessionId, owner, enabled` | Listening on a player, withdrawn on its own when the calling resource stops. |
+| `GetPlayerVoice` | `sessionId` | `{ mode, range, muted, channel, restrictions, listening }`. |
 | `MutePlayer` / `UnmutePlayer` / `IsPlayerMuted` | `sessionId, duration?` / `sessionId` / `sessionId` | Server-side mute, in seconds. |
 | `GetPlayerChannel` | `sessionId` | The personal channel of a player. |
 | `GetReservedChannelRange` | — | `first, last` of the player range. |
@@ -159,6 +186,8 @@ Local events, for resources observing the voice state:
 | `siku:voice:disconnected` | client | — | The voice server went away. |
 | `siku:voice:proximityChanged` | client | `state, reason` | The range in effect changed; `reason` is `'mode'`, `'override'` or `'reconnect'`. |
 | `siku:voice:talkingChanged` | client | `talking` | The local microphone went live or quiet. |
+| `siku:voice:restrictionsChanged` | client | `restrictions` | A restriction was set or lifted; `{ [scope] = { reasons } }`. |
+| `siku:voice:listeningChanged` | client | `listening` | Listening started or ended. |
 | `siku:voice:playerMuted` | server | `sessionId, muted, by?, duration?` | A mute was set or lifted. |
 
 ### State bags
@@ -167,13 +196,15 @@ Local events, for resources observing the voice state:
 |---|---|---|
 | `siku:state:voice` | client | `{ mode, range }` of the player, replicated. |
 | `siku:state:voiceMuted` | server | Whether the player is muted. |
+| `siku:state:voiceRestrictions` | client | `{ [scope] = { reasons } }` while any restriction is set, `false` otherwise. |
+| `siku:state:voiceListening` | client | Whether the player hears every player in scope. |
 
 ## Structure
 
 ```
 siku_voice/
-├── client/modules/    # support, mumble, effects, rendering, routing, proximity, scan, indicator, session, talk, keybinds, api
-├── server/modules/    # channels, audio, mute, lifecycle, api
+├── client/modules/    # support, mumble, effects, rendering, routing, restrictions, proximity, listening, scan, indicator, session, talk, keybinds, api
+├── server/modules/    # channels, audio, mute, grants, lifecycle, api
 ├── shared/modules/    # proximity modes registry
 ├── config/            # behavior, language
 └── translations/      # fr / en

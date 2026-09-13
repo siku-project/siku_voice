@@ -4,6 +4,7 @@ local EVENT_CONNECTED <const> = 'siku:voice:connected'
 local EVENT_DISCONNECTED <const> = 'siku:voice:disconnected'
 local EVENT_TALKING <const> = 'siku:voice:talkingChanged'
 local JOIN_RETRY_DELAY <const> = 1000
+local SELF_ROUTE <const> = 'self'
 
 local generation = 0
 local talking = false
@@ -36,9 +37,11 @@ local function initialize()
   VoiceMumble.resetTarget()
   VoiceMumble.setReady(true)
   VoiceEffects.ensureConfigured()
+  VoiceRouting.set(SELF_ROUTE, { channels = { VoiceMumble.getServerId() } }, Siku.name)
   VoiceProximity.reapply()
   VoiceRouting.reapply()
   VoiceRendering.reapply()
+  VoiceListening.reapply()
 
   Siku.print.debug(('Voice ready on channel %d'):format(VoiceMumble.getServerId()))
   TriggerEvent(EVENT_CONNECTED)
