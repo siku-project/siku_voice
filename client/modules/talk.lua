@@ -20,10 +20,11 @@ local function run()
   end
 end
 
---- Starts or stops the press depending on whether any holder remains.
+--- Starts or stops the press depending on whether any holder remains and
+--- the voice is not fully restricted.
 ---@return nil
 local function sync()
-  local wanted <const> = next(holders) ~= nil
+  local wanted <const> = next(holders) ~= nil and not VoiceRestrictions.isFullyRestricted()
 
   if wanted == holding then
     return
@@ -83,6 +84,13 @@ end
 ---@return boolean held Whether a hold is active.
 function VoiceTalk.isHeld()
   return holding
+end
+
+--- Re-evaluates the press after the restrictions moved: a hold placed
+--- while the voice was closed takes effect once it opens again.
+---@return nil
+function VoiceTalk.refresh()
+  sync()
 end
 
 AddEventHandler('onResourceStop', function(resource)

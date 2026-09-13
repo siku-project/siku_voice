@@ -5,6 +5,7 @@ local KINDS <const> = { players = true, channels = true }
 local routes <const> = {}
 local counts <const> = { players = {}, channels = {} }
 local applied <const> = { players = {}, channels = {} }
+local suspended = false
 
 local pushers <const> = {
   players = {
@@ -31,7 +32,7 @@ local pushers <const> = {
 ---@param id number The recipient id.
 ---@return nil
 local function sync(kind, id)
-  local wanted <const> = counts[kind][id] ~= nil
+  local wanted <const> = not suspended and counts[kind][id] ~= nil
   local current <const> = applied[kind][id] == true
 
   if wanted == current then
@@ -317,6 +318,35 @@ end
 ---@return boolean targeted Whether an enabled route names it.
 function VoiceRouting.isRecipient(kind, id)
   return KINDS[kind] ~= nil and counts[kind][id] ~= nil
+end
+
+--- Withholds every recipient from the engine, or hands them all back,
+--- without touching the routes: a restricted player keeps their routes
+--- and gets them back the moment the restriction lifts.
+---@param value boolean Whether the routes are withheld.
+---@return boolean changed Whether the state moved.
+function VoiceRouting.suspend(value)
+  local wanted <const> = value == true
+
+  if wanted == suspended then
+    return false
+  end
+
+  suspended = wanted
+
+  for kind in pairs(KINDS) do
+    for id in pairs(counts[kind]) do
+      sync(kind, id)
+    end
+  end
+
+  return true
+end
+
+--- Whether the routes are withheld from the engine.
+---@return boolean suspended Whether nothing receives the local voice.
+function VoiceRouting.isSuspended()
+  return suspended
 end
 
 --- Pushes every recipient again, after the engine emptied its target

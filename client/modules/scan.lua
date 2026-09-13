@@ -57,6 +57,8 @@ local function scan()
   local localPlayer <const> = PlayerId()
   local found <const> = {}
 
+  VoiceListening.update(players, localPlayer)
+
   for i = 1, #players do
     local playerId <const> = players[i]
 
@@ -75,6 +77,7 @@ local function scan()
 
   members = found
   VoiceRouting.set(ROUTE, { channels = found }, Siku.name)
+  VoiceRouting.enable(ROUTE, not VoiceRestrictions.isProximityRestricted())
 end
 
 --- Asks for a scan on the next frame instead of waiting for the interval,
