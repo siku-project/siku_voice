@@ -192,6 +192,55 @@ local function removeProximityFilter(name)
   return VoiceScan.removeFilter(name)
 end
 
+--- Closes one or more scopes of the local voice for a reason.
+---@param reason string A key naming why, such as 'dead'.
+---@param scopes? string|table One scope, a list, or nothing for every scope.
+---@return boolean applied Whether the restriction was stored.
+local function setRestriction(reason, scopes)
+  return VoiceRestrictions.set(reason, scopes)
+end
+
+--- Lifts a restriction.
+---@param reason string The key it was set with.
+---@return boolean removed Whether the restriction existed.
+local function clearRestriction(reason)
+  return VoiceRestrictions.clear(reason)
+end
+
+--- Whether a scope is closed, and why.
+---@param scope string The scope name, such as 'proximity', 'radio' or 'call'.
+---@return boolean restricted Whether the scope is closed.
+---@return table reasons The reasons closing it.
+local function isRestricted(scope)
+  return VoiceRestrictions.isRestricted(scope)
+end
+
+--- Every closed scope with the reasons closing it.
+---@return table restrictions { [scope] = { reasons } }.
+local function getRestrictions()
+  return VoiceRestrictions.getAll()
+end
+
+--- Starts hearing every player in scope, whatever the distance.
+---@param owner string A key naming the caller.
+---@return boolean started Whether the request was stored.
+local function startListening(owner)
+  return VoiceListening.start(owner)
+end
+
+--- Withdraws a listening request.
+---@param owner string The key it was started with.
+---@return boolean stopped Whether the request existed.
+local function stopListening(owner)
+  return VoiceListening.stop(owner)
+end
+
+--- Whether the local client hears every player in scope.
+---@return boolean listening Whether listening is on.
+local function isListening()
+  return VoiceListening.isActive()
+end
+
 exports('IsConnected', isConnected)
 exports('IsTalking', isTalking)
 exports('HoldTalk', holdTalk)
@@ -218,3 +267,10 @@ exports('RegisterEffect', registerEffect)
 exports('HasEffect', hasEffect)
 exports('AddProximityFilter', addProximityFilter)
 exports('RemoveProximityFilter', removeProximityFilter)
+exports('SetRestriction', setRestriction)
+exports('ClearRestriction', clearRestriction)
+exports('IsRestricted', isRestricted)
+exports('GetRestrictions', getRestrictions)
+exports('StartListening', startListening)
+exports('StopListening', stopListening)
+exports('IsListening', isListening)

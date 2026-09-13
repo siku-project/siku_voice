@@ -102,6 +102,25 @@ function VoiceMumble.removeTargetPlayer(target)
   end
 end
 
+--- Starts receiving everything sent into a channel, whatever the distance.
+---@param channel number The channel number.
+---@return nil
+function VoiceMumble.addListenChannel(channel)
+  if ready then
+    MumbleAddVoiceChannelListen(channel)
+  end
+end
+
+--- Stops receiving what is sent into a channel. Allowed while the session
+--- is only connected, so a stopping resource can let go of what it hears.
+---@param channel number The channel number.
+---@return nil
+function VoiceMumble.removeListenChannel(channel)
+  if MumbleIsConnected() then
+    MumbleRemoveVoiceChannelListen(channel)
+  end
+end
+
 --- Whether the engine knows a channel, which is what makes it targetable.
 ---@param channel number The channel number.
 ---@return boolean exists Whether the channel exists on the voice server.

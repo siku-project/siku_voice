@@ -27,4 +27,5 @@ end)
 
 AddEventHandler('playerDropped', function()
   VoiceMute.forget(source)
+  VoiceGrants.forgetSession(source)
 end)
