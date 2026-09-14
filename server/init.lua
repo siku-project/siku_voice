@@ -15,13 +15,15 @@ CreateThread(function()
   Wait(0)
 
   ApplyAudioSettings()
+  PublishVoiceServer()
   RestoreConnectedSessions()
 
   local first <const>, last <const> = VoiceChannels.getReservedRange()
 
-  Siku.print.success(('Voice ready, %d proximity mode(s), player channels %d to %d'):format(
+  Siku.print.success(('Voice ready, %d proximity mode(s), player channels %d to %d, voice server %s'):format(
     VoiceModes.count(),
     first,
-    last
+    last,
+    VoiceEndpoint.describe()
   ))
 end)
