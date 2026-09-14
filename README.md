@@ -2,7 +2,7 @@
 
 A modern, high-performance voice system for the SIKU ecosystem — providing proximity voice, communication channels, calls, radio integration, audio effects, and a clean API for immersive FiveM roleplay experiences. Built for reliability, extensibility, and seamless integration across SIKU resources.
 
-![Version](https://img.shields.io/badge/version-1.0.2-4785bd)
+![Version](https://img.shields.io/badge/version-1.1.0-4785bd)
 ![FiveM](https://img.shields.io/badge/fx__version-cerulean-4785bd)
 ![Lua](https://img.shields.io/badge/Lua-5.4-4785bd)
 
@@ -43,13 +43,27 @@ ensure siku_voice
 
 No other voice resource (pma-voice, mumble-voip, etc.) may run alongside.
 
+### External voice server
+
+By default the clients use the Mumble server built into the FXServer. To move the voice traffic elsewhere, a second FXServer kept as a relay or a standalone Mumble server, fill the `server` section of `config/voice.lua`:
+
+```lua
+server = {
+  address = 'voice.example.com',
+  port = 30120,
+  hideEndpoint = true,
+},
+```
+
+The server validates the section at startup, replicates it through the global state and every client, present or future, points its game at it and reconnects on its own. Nothing is polled: a client reacts the moment the value changes. `hideEndpoint` keeps the address out of the logs on both sides. A relay FXServer needs no resource at all, only OneSync.
+
 ## Configuration
 
 All options live in `config/` and are documented inline.
 
 | File | Options |
 |---|---|
-| `config/voice.lua` | `audio` (rendering `mode`, `sendingRangeOnly`, `nativeRangeFactor`), `proximity` (`defaultMode`, `modes`, `scanInterval`, `targetMargin`, `hysteresis`), `keybinds` (`pushToTalk`, `cycleProximity`), `indicator` (`enabled`, `duration`, `fade`, `style`, `color`, `alpha`), `listening` (`followSpectate`), `effects` (named submixes), `intervals`, `mute` (`defaultDuration`), `staffRole` |
+| `config/voice.lua` | `audio` (rendering `mode`, `sendingRangeOnly`, `nativeRangeFactor`), `server` (`address`, `port`, `hideEndpoint`), `proximity` (`defaultMode`, `modes`, `scanInterval`, `targetMargin`, `hysteresis`), `keybinds` (`pushToTalk`, `cycleProximity`), `indicator` (`enabled`, `duration`, `fade`, `style`, `color`, `alpha`), `listening` (`followSpectate`), `effects` (named submixes), `intervals`, `mute` (`defaultDuration`), `staffRole` |
 | `config/translation.lua` | `language` (`fr` / `en`) |
 
 ### Keybinds
@@ -175,6 +189,7 @@ exports.siku_voice:StopListening('spectate')
 | `MutePlayer` / `UnmutePlayer` / `IsPlayerMuted` | `sessionId, duration?` / `sessionId` / `sessionId` | Server-side mute, in seconds. |
 | `GetPlayerChannel` | `sessionId` | The personal channel of a player. |
 | `GetReservedChannelRange` | — | `first, last` of the player range. |
+| `GetVoiceServer` | — | `{ external, address?, port? }`: the voice server the clients are told to use. |
 
 ### Events
 
@@ -198,13 +213,14 @@ Local events, for resources observing the voice state:
 | `siku:state:voiceMuted` | server | Whether the player is muted. |
 | `siku:state:voiceRestrictions` | client | `{ [scope] = { reasons } }` while any restriction is set, `false` otherwise. |
 | `siku:state:voiceListening` | client | Whether the player hears every player in scope. |
+| `siku:state:voiceServer` | server (global) | `{ address, port }` of the external voice server, `false` for the built-in one. |
 
 ## Structure
 
 ```
 siku_voice/
-├── client/modules/    # support, mumble, effects, rendering, routing, restrictions, proximity, listening, scan, indicator, session, talk, keybinds, api
-├── server/modules/    # channels, audio, mute, grants, lifecycle, api
+├── client/modules/    # support, mumble, endpoint, effects, rendering, routing, restrictions, proximity, listening, scan, indicator, session, talk, keybinds, api
+├── server/modules/    # channels, audio, endpoint, mute, grants, lifecycle, api
 ├── shared/modules/    # proximity modes registry
 ├── config/            # behavior, language
 └── translations/      # fr / en

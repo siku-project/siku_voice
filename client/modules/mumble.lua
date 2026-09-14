@@ -37,6 +37,15 @@ function VoiceMumble.isConnected()
   return MumbleIsConnected()
 end
 
+--- Points the game at a voice server other than the one inside the
+--- FXServer. The game drops its current session and reconnects there.
+---@param address string The server address.
+---@param port number The server port.
+---@return nil
+function VoiceMumble.setServerAddress(address, port)
+  MumbleSetServerAddress(address, port)
+end
+
 --- Joins the personal channel and waits for the engine to confirm it. The
 --- join is asynchronous, so the request is repeated until the channel the
 --- engine reports matches, or the wait runs out.

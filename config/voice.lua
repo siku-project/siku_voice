@@ -28,6 +28,27 @@ VoiceConfig = {
     nativeRangeFactor = 0.4,
   },
 
+  --- Voice server
+  ---
+  --- Which Mumble server the clients connect to. The built-in one runs
+  --- inside this FXServer and needs nothing. An external one, such as a
+  --- second FXServer kept as a voice relay, takes an address and a port.
+  --- Every client, present or future, is pointed at it the moment the
+  --- resource starts, and reconnects on its own.
+  server = {
+    --- false for the built-in server, or the address of the external one
+    --- ('voice.example.com' or '203.0.113.10').
+    address = false,
+
+    --- The port of the external server: the FXServer port of a relay
+    --- (30120 by default), or 64738 for a standalone Mumble server.
+    --- Ignored with the built-in one.
+    port = 30120,
+
+    --- Whether the address is hidden in the logs, on both sides.
+    hideEndpoint = true,
+  },
+
   --- Proximity
   ---
   --- The modes a player cycles through, and how the nearby players a voice
