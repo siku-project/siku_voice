@@ -260,6 +260,18 @@ local function getReservedChannelRange()
   return VoiceChannels.getReservedRange()
 end
 
+--- The voice server the clients are told to use.
+---@return table server { external, address?, port? }.
+local function getVoiceServer()
+  local endpoint <const> = VoiceEndpoint.get()
+
+  return {
+    external = endpoint ~= false,
+    address = endpoint and endpoint.address or nil,
+    port = endpoint and endpoint.port or nil,
+  }
+end
+
 exports('SetPlayerProximityMode', setPlayerProximityMode)
 exports('SetPlayerRangeOverride', setPlayerRangeOverride)
 exports('ClearPlayerRangeOverride', clearPlayerRangeOverride)
@@ -274,3 +286,4 @@ exports('UnmutePlayer', unmutePlayer)
 exports('IsPlayerMuted', isPlayerMuted)
 exports('GetPlayerChannel', getPlayerChannel)
 exports('GetReservedChannelRange', getReservedChannelRange)
+exports('GetVoiceServer', getVoiceServer)

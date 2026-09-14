@@ -72,13 +72,18 @@ function VoiceSession.isTalking()
   return talking
 end
 
-AddEventHandler('mumbleConnected', function()
+AddEventHandler('mumbleConnected', function(address, reconnecting)
+  Siku.print.debug(('Voice server %s (%s)'):format(
+    reconnecting and 'reconnected' or 'connected',
+    VoiceEndpoint.describe(tostring(address))
+  ))
   CreateThread(initialize)
 end)
 
-AddEventHandler('mumbleDisconnected', function()
+AddEventHandler('mumbleDisconnected', function(address)
   generation = generation + 1
   VoiceMumble.setReady(false)
+  Siku.print.debug(('Voice server disconnected (%s)'):format(VoiceEndpoint.describe(tostring(address))))
   TriggerEvent(EVENT_DISCONNECTED)
 end)
 
