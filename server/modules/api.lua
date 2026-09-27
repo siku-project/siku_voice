@@ -4,6 +4,7 @@ local LISTENING_STATE_KEY <const> = 'siku:state:voiceListening'
 local SCOPE_ALL <const> = 'all'
 local GRANT_RESTRICTION <const> = 'restriction:'
 local GRANT_LISTENING <const> = 'listening:'
+local GRANT_RANGE <const> = 'range:'
 
 --- Whether a session is online.
 ---@param sessionId any The player server id.
@@ -73,14 +74,15 @@ local function setPlayerProximityMode(sessionId, mode)
   return true
 end
 
---- Sets a temporary range on a player, on behalf of a caller.
+--- Sets a temporary range on a player, on behalf of the calling resource.
+--- Cleared on its own when that resource stops.
 ---@param sessionId number The player server id.
 ---@param owner string A key naming the caller.
 ---@param range number The range in meters.
 ---@param priority? number Wins over lower priorities.
 ---@return boolean sent Whether the request reached the client.
 local function setPlayerRangeOverride(sessionId, owner, range, priority)
-  if not isOnline(sessionId) or type(owner) ~= 'string' or owner == '' then
+  if not isOnline(sessionId) or not isName(owner) then
     return false
   end
 
@@ -89,6 +91,9 @@ local function setPlayerRangeOverride(sessionId, owner, range, priority)
   end
 
   TriggerClientEvent('siku_voice:client:setRangeOverride', sessionId, owner, range, priority)
+  VoiceGrants.track(caller(), sessionId, GRANT_RANGE .. owner, function()
+    TriggerClientEvent('siku_voice:client:clearRangeOverride', sessionId, owner)
+  end)
 
   return true
 end
@@ -98,11 +103,12 @@ end
 ---@param owner string The key it was set with.
 ---@return boolean sent Whether the request reached the client.
 local function clearPlayerRangeOverride(sessionId, owner)
-  if not isOnline(sessionId) or type(owner) ~= 'string' then
+  if not isOnline(sessionId) or not isName(owner) then
     return false
   end
 
   TriggerClientEvent('siku_voice:client:clearRangeOverride', sessionId, owner)
+  VoiceGrants.untrack(caller(), sessionId, GRANT_RANGE .. owner)
 
   return true
 end
