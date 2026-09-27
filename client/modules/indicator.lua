@@ -76,10 +76,15 @@ local function run()
   active = false
 end
 
---- Shows the ring around the player for the configured duration.
+--- Shows the ring around the player for the configured duration. Does
+--- nothing while the indicator is disabled in the config.
 ---@param range? number The radius in meters (default: the range in effect).
 ---@return nil
 function VoiceIndicator.show(range)
+  if not VoiceConfig.indicator.enabled then
+    return
+  end
+
   radius = VoiceIsPositiveNumber(range) and range or VoiceProximity.getRange()
   shownAt = GetGameTimer()
 

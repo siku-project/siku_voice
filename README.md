@@ -2,7 +2,7 @@
 
 A modern, high-performance voice system for the SIKU ecosystem — providing proximity voice, communication channels, calls, radio integration, audio effects, and a clean API for immersive FiveM roleplay experiences. Built for reliability, extensibility, and seamless integration across SIKU resources.
 
-![Version](https://img.shields.io/badge/version-1.1.0-4785bd)
+![Version](https://img.shields.io/badge/version-1.1.1-4785bd)
 ![FiveM](https://img.shields.io/badge/fx__version-cerulean-4785bd)
 ![Lua](https://img.shields.io/badge/Lua-5.4-4785bd)
 
